@@ -25,8 +25,8 @@ router.use(performanceMiddleware);
 router.get('/', (req, res) => {
   return res.status(200).json({
     status: 'success',
-    message: 'Welcome to Komikcast API. See https://github.com/KanekiCraynet/api-komikcast for documentation',
-    version: '1.0.0'
+    message: 'Welcome to Komikcast API. See https://github.com/KanekiCraynet/api-manga for documentation',
+    version: '2.0.0'
   });
 });
 
