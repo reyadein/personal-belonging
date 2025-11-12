@@ -6,6 +6,20 @@
   <title>API Manga Dashboard</title>
   <link rel="stylesheet" href="css/dashboard.css">
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script>
+    // Disable source map loading to prevent CSP violations
+    // Chart.js will try to load source maps, but we can ignore the errors
+    if (typeof window !== 'undefined' && window.Chart) {
+      // Suppress source map warnings
+      const originalWarn = console.warn;
+      console.warn = function(...args) {
+        if (args[0] && typeof args[0] === 'string' && args[0].includes('source map')) {
+          return; // Suppress source map warnings
+        }
+        originalWarn.apply(console, args);
+      };
+    }
+  </script>
 </head>
 <body>
   <div class="dashboard-container">

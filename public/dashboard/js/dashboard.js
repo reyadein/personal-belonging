@@ -13,6 +13,8 @@ const Dashboard = {
     column: null,
     direction: 'asc'
   },
+  chartUpdateThrottle: null,
+  lastChartUpdate: 0,
 
   /**
    * Initialize dashboard
@@ -365,36 +367,52 @@ const Dashboard = {
   },
 
   /**
-   * Update charts with time-series data
+   * Update charts with time-series data (throttled for performance)
    */
   updateCharts(timeSeriesData) {
     if (!timeSeriesData || timeSeriesData.length === 0) return;
+
+    // Throttle chart updates to max once per 500ms
+    const now = Date.now();
+    if (now - this.lastChartUpdate < 500) {
+      if (this.chartUpdateThrottle) {
+        clearTimeout(this.chartUpdateThrottle);
+      }
+      this.chartUpdateThrottle = setTimeout(() => {
+        this.updateCharts(timeSeriesData);
+      }, 500 - (now - this.lastChartUpdate));
+      return;
+    }
+    this.lastChartUpdate = now;
 
     const labels = timeSeriesData.map(point => {
       const date = new Date(point.timestamp);
       return date.toLocaleTimeString();
     });
 
-    // Response Time Chart
-    if (this.charts.responseTime) {
-      this.charts.responseTime.data.labels = labels;
-      this.charts.responseTime.data.datasets[0].data = timeSeriesData.map(p => p.avgResponseTime);
-      this.charts.responseTime.update('none');
-    }
+    // Use requestAnimationFrame for smooth updates
+    requestAnimationFrame(() => {
+      // Response Time Chart
+      if (this.charts.responseTime) {
+        this.charts.responseTime.data.labels = labels;
+        this.charts.responseTime.data.datasets[0].data = timeSeriesData.map(p => p.avgResponseTime);
+        this.charts.responseTime.update('none');
+      }
 
-    // Request Rate Chart
-    if (this.charts.requestRate) {
-      this.charts.requestRate.data.labels = labels;
-      this.charts.requestRate.data.datasets[0].data = timeSeriesData.map(p => p.requestCount);
-      this.charts.requestRate.update('none');
-    }
+      // Request Rate Chart
+      if (this.charts.requestRate) {
+        this.charts.requestRate.data.labels = labels;
+        this.charts.requestRate.data.datasets[0].data = timeSeriesData.map(p => p.requestCount);
+        this.charts.requestRate.update('none');
+      }
 
-    // Error Rate Chart
-    if (this.charts.errorRate) {
-      this.charts.errorRate.data.labels = labels;
-      this.charts.errorRate.data.datasets[0].data = timeSeriesData.map(p => p.errorRate);
-      this.charts.errorRate.update('none');
-    }
+      // Error Rate Chart
+      if (this.charts.errorRate) {
+        this.charts.errorRate.data.labels = labels;
+        this.charts.errorRate.data.datasets[0].data = timeSeriesData.map(p => p.errorRate);
+        this.charts.errorRate.update('none');
+      }
+    });
   },
 
   /**
@@ -434,20 +452,23 @@ const Dashboard = {
       };
 
       this.eventSource.onmessage = (event) => {
-        try {
-          const data = JSON.parse(event.data);
-          
-          if (data.type === 'connected') {
-            this.updateConnectionStatus('connected');
-          } else if (data.type === 'metrics') {
-            this.handleRealtimeMetrics(data);
-          } else if (data.type === 'error') {
-            console.error('SSE error:', data.message);
-            this.updateConnectionStatus('error');
+        // Use requestAnimationFrame to prevent blocking
+        requestAnimationFrame(() => {
+          try {
+            const data = JSON.parse(event.data);
+            
+            if (data.type === 'connected') {
+              this.updateConnectionStatus('connected');
+            } else if (data.type === 'metrics') {
+              this.handleRealtimeMetrics(data);
+            } else if (data.type === 'error') {
+              console.error('SSE error:', data.message);
+              this.updateConnectionStatus('error');
+            }
+          } catch (error) {
+            console.error('Error parsing SSE data:', error);
           }
-        } catch (error) {
-          console.error('Error parsing SSE data:', error);
-        }
+        });
       };
 
       this.eventSource.onerror = () => {
@@ -482,18 +503,26 @@ const Dashboard = {
       this.realtimeData.shift();
     }
 
-    // Update charts with real-time data
+    // Update charts with real-time data (throttled)
     if (this.realtimeData.length > 1) {
+      const now = Date.now();
+      if (now - this.lastChartUpdate < 500) {
+        return; // Skip update if too soon
+      }
+      this.lastChartUpdate = now;
+
       const labels = this.realtimeData.map(d => {
         const date = new Date(d.timestamp);
         return date.toLocaleTimeString();
       });
 
-      if (this.charts.responseTime) {
-        this.charts.responseTime.data.labels = labels;
-        this.charts.responseTime.data.datasets[0].data = this.realtimeData.map(d => d.responseTime);
-        this.charts.responseTime.update('none');
-      }
+      requestAnimationFrame(() => {
+        if (this.charts.responseTime) {
+          this.charts.responseTime.data.labels = labels;
+          this.charts.responseTime.data.datasets[0].data = this.realtimeData.map(d => d.responseTime);
+          this.charts.responseTime.update('none');
+        }
+      });
     }
 
     // Update overview cards with latest data
