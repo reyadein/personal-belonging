@@ -97,7 +97,7 @@ const getComicDetail = async (url) => {
     const item = response.data.data;
     
     // Get chapters
-    const chaptersUrl = `${API_BASE_URL}/chapter/${mangaId}/list?page=1&page_size=100&sort_by=chapter_number&sort_order=desc`;
+    const chaptersUrl = `${API_BASE_URL}/chapter/${mangaId}/list?page=1&page_size=9999&sort_by=chapter_number&sort_order=desc`;
     const chaptersResponse = await AxiosService(chaptersUrl);
     
     let chapters = [];
