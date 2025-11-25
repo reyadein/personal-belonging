@@ -12,16 +12,17 @@ app.set('trust proxy', 1);
 // Middleware
 app.use(cors());
 app.use(helmet({
-  contentSecurityPolicy: {
-    directives: {
-      defaultSrc: ["'self'"],
-      scriptSrc: ["'self'", "'unsafe-inline'", "https://cdn.jsdelivr.net"],
-      styleSrc: ["'self'", "'unsafe-inline'"],
-      imgSrc: ["'self'", "data:", "https:"],
-      connectSrc: ["'self'", "https://cdn.jsdelivr.net"],
-      fontSrc: ["'self'", "https://cdn.jsdelivr.net"],
-    },
-  },
+  crossOriginResourcePolicy: { policy: "cross-origin" },
+  // contentSecurityPolicy: {
+  //   directives: {
+  //     defaultSrc: ["'self'"],
+  //     scriptSrc: ["'self'", "'unsafe-inline'", "https://cdn.jsdelivr.net"],
+  //     styleSrc: ["'self'", "'unsafe-inline'"],
+  //     imgSrc: ["'self'", "data:", "https:"],
+  //     connectSrc: ["'self'", "https://cdn.jsdelivr.net"],
+  //     fontSrc: ["'self'", "https://cdn.jsdelivr.net"],
+  //   },
+  // },
 }));
 app.use(express.json());
 
