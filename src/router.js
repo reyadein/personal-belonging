@@ -1,3 +1,4 @@
+const { extractVideo } = require('./services/anime_extract');
 const router = require('express')();
 const { responseApi } = require('./helper/response_api');
 const { asyncHandler, errorHandler } = require('./helper/error_handler');
@@ -23,6 +24,13 @@ const dashboardService = require('./services/dashboard_service');
 
 // Apply performance monitoring to all routes
 router.use(performanceMiddleware);
+
+// --- ROUTE ANIME EXTRACTOR ---
+router.get('/anime/extract', async (req, res) => {
+    const { url } = req.query;
+    const result = await extractVideo(url);
+    res.json(result);
+});
 
 // Root endpoint
 router.get('/', (req, res) => {
